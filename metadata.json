@@ -1,0 +1,7 @@
+{
+  "name": "VeriMedia AI: Deepfake Artifact Detector",
+  "description": "A high-fidelity media integrity tool that leverages Gemini AI to detect visual and structural artifacts in videos and images, identifying potential deepfakes with detailed reasoning.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
