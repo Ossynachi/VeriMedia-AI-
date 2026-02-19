@@ -5,9 +5,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface ResultsPanelProps {
   result: AnalysisResult;
+  userFeedback?: 'correct' | 'incorrect';
+  onFeedback: (feedback: 'correct' | 'incorrect') => void;
 }
 
-const ResultsPanel: React.FC<ResultsPanelProps> = ({ result }) => {
+const ResultsPanel: React.FC<ResultsPanelProps> = ({ result, userFeedback, onFeedback }) => {
   const chartData = [
     { name: 'Integrity', value: result.integrityScore },
     { name: 'Artifact Risk', value: 100 - result.integrityScore },
@@ -18,7 +20,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ result }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
       {/* Integrity Summary */}
-      <div className="bg-gray-900/60 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-md">
+      <div className="bg-gray-900/60 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-md flex flex-col">
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
           <i className="fas fa-shield-virus text-blue-400"></i>
           Integrity Score
@@ -47,8 +49,45 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ result }) => {
             <span className="text-xs text-gray-400 uppercase tracking-widest font-bold">Safe</span>
           </div>
         </div>
-        <div className={`mt-4 p-3 rounded-lg text-center font-bold text-sm ${result.isDeepfake ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
-          {result.isDeepfake ? 'POTENTIAL DEEPFAKE DETECTED' : 'MEDIA APPEARS AUTHENTIC'}
+        <div className={`mt-4 p-3 rounded-lg text-center font-bold text-sm border flex flex-col gap-1 ${
+          result.classification === 'ai-generated' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+          result.classification === 'ai-edited' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+          'bg-green-500/20 text-green-400 border-green-500/30'
+        }`}>
+          <span className="uppercase tracking-wider text-xs opacity-80">Classification</span>
+          <span className="text-lg">
+            {result.classification === 'ai-generated' ? 'AI GENERATED' :
+             result.classification === 'ai-edited' ? 'AI EDITED' :
+             'NATURAL / AUTHENTIC'}
+          </span>
+        </div>
+
+        {/* Feedback Section */}
+        <div className="mt-auto pt-6 border-t border-gray-800">
+          <p className="text-xs text-gray-500 font-medium mb-3 text-center uppercase tracking-wide">Was this accurate?</p>
+          {userFeedback ? (
+            <div className={`text-center p-3 rounded-lg text-sm font-bold animate-fadeIn transition-all ${userFeedback === 'correct' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+              <i className={`fas ${userFeedback === 'correct' ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
+              {userFeedback === 'correct' ? 'Confirmed Accurate' : 'Marked Inaccurate'}
+            </div>
+          ) : (
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => onFeedback('correct')}
+                className="flex-1 py-2 px-3 bg-gray-800 hover:bg-green-500/20 hover:text-green-400 hover:border-green-500/50 border border-gray-700 rounded-lg transition-all text-xs font-bold text-gray-400 flex items-center justify-center gap-2 group"
+              >
+                <i className="fas fa-thumbs-up group-hover:scale-110 transition-transform"></i>
+                Yes
+              </button>
+              <button 
+                onClick={() => onFeedback('incorrect')}
+                className="flex-1 py-2 px-3 bg-gray-800 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 border border-gray-700 rounded-lg transition-all text-xs font-bold text-gray-400 flex items-center justify-center gap-2 group"
+              >
+                <i className="fas fa-thumbs-down group-hover:scale-110 transition-transform"></i>
+                No
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
