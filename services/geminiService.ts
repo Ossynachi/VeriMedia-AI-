@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const EMBEDDING_MODEL = "text-embedding-004";
+const MODEL_NAME = "gemini-3-flash-preview";
 
 export async function generateEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.API_KEY;
@@ -14,7 +15,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     const result = await ai.models.embedContent({
       model: EMBEDDING_MODEL,
-      content: { parts: [{ text }] }
+      contents: { parts: [{ text }] }
     });
     
     // The SDK returns embedding.values as number[]
@@ -64,7 +65,7 @@ export async function analyzeMediaArtifacts(
     - 'ai-edited': Real media with AI edits (e.g., background change, retouching).
     - 'ai-generated': Fully AI-generated.
 
-    Provide a detailed technical analysis.
+    Provide a detailed technical analysis in Markdown format. Use headers (##), bullet points (-), and bold text (**bold**) for clarity.
   `;
 
   try {

@@ -12,7 +12,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesSelected, disabled, 
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFilesSelected(Array.from(e.target.files));
+      const selectedFiles = Array.from(e.target.files);
+      validateAndUpload(selectedFiles);
     }
     // Reset input so same files can be selected again if needed
     e.target.value = '';
@@ -40,9 +41,27 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFilesSelected, disabled, 
     if (disabled) return;
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFilesSelected(Array.from(e.dataTransfer.files));
+      const selectedFiles = Array.from(e.dataTransfer.files);
+      validateAndUpload(selectedFiles);
     }
   }, [disabled, onFilesSelected]);
+
+  const validateAndUpload = (files: File[]) => {
+    const images = files.filter(f => f.type.startsWith('image/'));
+    const videos = files.filter(f => f.type.startsWith('video/'));
+
+    if (images.length > 20) {
+      alert(`Too many images selected. Maximum allowed is 20. You selected ${images.length}.`);
+      return;
+    }
+
+    if (videos.length > 10) {
+      alert(`Too many videos selected. Maximum allowed is 10. You selected ${videos.length}.`);
+      return;
+    }
+
+    onFilesSelected(files);
+  };
 
   if (compact) {
      return (

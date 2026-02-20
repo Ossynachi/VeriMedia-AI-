@@ -112,6 +112,18 @@ export default function App() {
     }
   };
 
+  const handleBatchAnalyze = async () => {
+    const filesToProcess = files.filter(f => f.status === 'idle' || f.status === 'error');
+    if (filesToProcess.length === 0) return;
+
+    // Process in chunks of 3 to respect rate limits
+    const chunkSize = 3;
+    for (let i = 0; i < filesToProcess.length; i += chunkSize) {
+      const chunk = filesToProcess.slice(i, i + chunkSize);
+      await Promise.all(chunk.map(file => handleAnalyze(file.id)));
+    }
+  };
+
   const handleContextChange = (id: string, context: string) => {
     setFiles(prev => prev.map(f => f.id === id ? { ...f, context } : f));
   };
@@ -166,12 +178,21 @@ export default function App() {
             <div className="lg:col-span-3 lg:h-full flex flex-col bg-gray-900/40 border border-blue-500/20 rounded-2xl backdrop-blur-sm overflow-hidden">
               <div className="p-4 border-b border-blue-500/20 flex justify-between items-center">
                 <h3 className="font-bold text-gray-300">Media Queue ({files.length})</h3>
-                <button 
-                  onClick={() => setFiles([])} 
-                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                >
-                  Clear All
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleBatchAnalyze}
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!files.some(f => f.status === 'idle' || f.status === 'error')}
+                  >
+                    Analyze All
+                  </button>
+                  <button 
+                    onClick={() => setFiles([])} 
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                 {files.map(file => (

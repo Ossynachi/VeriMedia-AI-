@@ -2,6 +2,7 @@
 import React from 'react';
 import { AnalysisResult } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import ReactMarkdown from 'react-markdown';
 
 interface ResultsPanelProps {
   result: AnalysisResult;
@@ -183,8 +184,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ result, userFeedback, onFee
           <i className="fas fa-file-alt text-blue-400"></i>
           AI Expert Analysis
         </h3>
-        <div className="text-gray-300 leading-relaxed text-sm whitespace-pre-wrap font-mono bg-black/30 p-4 rounded-xl border border-gray-800">
-          {result.detailedAnalysis}
+        <div className="text-gray-300 leading-relaxed text-sm bg-black/30 p-6 rounded-xl border border-gray-800">
+          <ReactMarkdown
+            components={{
+              h1: ({node, ...props}) => <h1 className="text-lg font-bold text-white mb-2 mt-4" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-base font-bold text-blue-400 mb-2 mt-4" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-sm font-bold text-gray-200 mb-1 mt-2" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-1 mb-4 ml-2" {...props} />,
+              li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
+              p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
+              strong: ({node, ...props}) => <strong className="text-white font-semibold" {...props} />,
+            }}
+          >
+            {result.detailedAnalysis}
+          </ReactMarkdown>
         </div>
       </div>
     </div>
