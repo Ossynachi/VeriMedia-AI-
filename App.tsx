@@ -1,10 +1,11 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { MediaFile } from './types';
+import { MediaFile, AnalysisResult } from './types';
 import FileUploader from './components/FileUploader';
 import ResultsPanel from './components/ResultsPanel';
 import MediaViewer from './components/MediaViewer';
-import { analyzeMediaArtifacts } from './services/geminiService';
+import { analyzeMediaArtifacts, generateEmbedding } from './services/geminiService';
+import { calculateAnomalyScore } from './utils/anomalyDetection';
 
 // Helper to convert file to base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -23,6 +24,24 @@ const fileToBase64 = (file: File): Promise<string> => {
 export default function App() {
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<string | null>(null);
+  const [history, setHistory] = useState<AnalysisResult[]>([]);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const storedHistory = localStorage.getItem('verimedia_history');
+    if (storedHistory) {
+      try {
+        setHistory(JSON.parse(storedHistory));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('verimedia_history', JSON.stringify(history));
+  }, [history]);
 
   // Auto-select first file if none selected
   useEffect(() => {
@@ -63,7 +82,27 @@ export default function App() {
 
     try {
       const base64 = await fileToBase64(fileToAnalyze.file);
-      const result = await analyzeMediaArtifacts(base64, fileToAnalyze.file.type, fileToAnalyze.context);
+      let result = await analyzeMediaArtifacts(base64, fileToAnalyze.file.type, fileToAnalyze.context);
+      
+      // Unsupervised Learning Step:
+      // 1. Generate embedding for the detailed analysis text
+      const embedding = await generateEmbedding(result.detailedAnalysis);
+      
+      if (embedding.length > 0) {
+        // 2. Get embeddings of previously analyzed 'natural' media
+        const naturalHistoryEmbeddings = history
+          .filter(h => h.classification === 'natural' && h.embedding && h.embedding.length > 0)
+          .map(h => h.embedding!);
+          
+        // 3. Calculate anomaly score relative to natural history
+        // If no history, score is 0 (baseline)
+        const anomalyScore = calculateAnomalyScore(embedding, naturalHistoryEmbeddings);
+        
+        result = { ...result, embedding, anomalyScore };
+        
+        // 4. Update history if it's a valid result
+        setHistory(prev => [...prev, result]);
+      }
       
       setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'complete', result } : f));
     } catch (err: any) {

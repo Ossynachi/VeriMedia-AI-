@@ -16,6 +16,8 @@ export interface AnalysisResult {
   artifacts: Artifact[];
   detailedAnalysis: string;
   timestamp: string;
+  embedding?: number[]; // For unsupervised learning
+  anomalyScore?: number; // 0 to 100 (0 = normal, 100 = anomaly)
 }
 
 export interface MediaFile {

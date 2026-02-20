@@ -2,7 +2,32 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-const MODEL_NAME = "gemini-3-flash-preview";
+const EMBEDDING_MODEL = "text-embedding-004";
+
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing.");
+  }
+  const ai = new GoogleGenAI({ apiKey });
+  
+  try {
+    const result = await ai.models.embedContent({
+      model: EMBEDDING_MODEL,
+      content: { parts: [{ text }] }
+    });
+    
+    // The SDK returns embedding.values as number[]
+    if (!result.embedding || !result.embedding.values) {
+      throw new Error("Failed to generate embedding");
+    }
+    
+    return result.embedding.values;
+  } catch (error) {
+    console.error("Embedding Error:", error);
+    return []; // Fail gracefully
+  }
+}
 
 export async function analyzeMediaArtifacts(
   base64Data: string,

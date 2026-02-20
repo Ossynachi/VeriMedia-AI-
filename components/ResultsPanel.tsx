@@ -17,14 +17,40 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ result, userFeedback, onFee
 
   const COLORS = ['#3b82f6', '#ef4444'];
 
+  const downloadReport = () => {
+    const report = {
+      ...result,
+      generatedAt: new Date().toISOString(),
+      application: "VeriMedia AI"
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `verimedia-report-${new Date().getTime()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
       {/* Integrity Summary */}
       <div className="bg-gray-900/60 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-md flex flex-col">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <i className="fas fa-shield-virus text-blue-400"></i>
-          Integrity Score
-        </h3>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <i className="fas fa-shield-virus text-blue-400"></i>
+            Integrity Score
+          </h3>
+          <button 
+            onClick={downloadReport}
+            className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1 transition-colors"
+            title="Download JSON Report"
+          >
+            <i className="fas fa-download"></i> Save
+          </button>
+        </div>
         <div className="h-48 w-full flex items-center justify-center relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -61,6 +87,33 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ result, userFeedback, onFee
              'NATURAL / AUTHENTIC'}
           </span>
         </div>
+
+        {/* Anomaly Score (Unsupervised) */}
+        {result.anomalyScore !== undefined && (
+          <div className="mt-4 bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Anomaly Score</span>
+              <span className={`text-xs font-bold ${
+                result.anomalyScore > 50 ? 'text-red-400' : 'text-blue-400'
+              }`}>
+                {result.anomalyScore.toFixed(1)}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+              <div 
+                className={`h-full rounded-full ${
+                  result.anomalyScore > 50 ? 'bg-red-500' : 'bg-blue-500'
+                }`}
+                style={{ width: `${result.anomalyScore}%` }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-500 mt-1.5 leading-tight">
+              {result.anomalyScore > 50 
+                ? "This analysis deviates significantly from your typical 'natural' uploads."
+                : "This analysis is consistent with your typical 'natural' uploads."}
+            </p>
+          </div>
+        )}
 
         {/* Feedback Section */}
         <div className="mt-auto pt-6 border-t border-gray-800">
